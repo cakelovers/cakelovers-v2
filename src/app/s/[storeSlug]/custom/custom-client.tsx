@@ -148,6 +148,12 @@ export default function CustomOrderClient() {
         <p className="text-sm text-zinc-500">
           사장님이 설명과 참고 사진을 확인하고 견적을 보내드려요. 견적이 도착하면 안내된 계좌로 입금해 주시면 됩니다.
         </p>
+        <a
+          href={`/s/${storeSlug}/orders/${orderId}`}
+          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+        >
+          주문 상태 확인하기
+        </a>
       </div>
     )
   }

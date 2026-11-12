@@ -50,7 +50,12 @@ export default function AdminOrdersClient() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-zinc-900">주문 관리</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-xl font-semibold text-zinc-900">주문 관리</h1>
+          <Link href={`/admin/${storeSlug}/settings`} className="text-sm text-zinc-500 underline">
+            매장 설정
+          </Link>
+        </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as OrderStatus | "")}
