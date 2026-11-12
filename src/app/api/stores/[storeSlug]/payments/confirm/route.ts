@@ -103,6 +103,7 @@ export async function POST(
       status: "paid",
       payment_provider: "toss",
       payment_transaction_id: paymentKey,
+      payment_method: typeof tossBody?.method === "string" ? tossBody.method : null,
       paid_at: new Date().toISOString(),
     })
     .eq("id", orderId)

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { APIError, APIConnectionTimeoutError } from "openai"
 import { generateCakePreview } from "@/lib/openai/generate-cake-preview"
+import { checkRateLimit, getClientKey, RATE_LIMIT_MAX_REQUESTS_PER_WINDOW } from "@/lib/ai/rate-limit"
 import { errorResponse } from "@/lib/api-error"
 
 const MIN_DESCRIPTION_LENGTH = 10
@@ -9,7 +10,22 @@ const MAX_DESCRIPTION_LENGTH = 500
 // Stateless text-to-image endpoint for Flow B (AI 오더메이드). No Supabase
 // reads/writes here — nothing generated here is persisted until the
 // customer's eventually-selected candidate is submitted with the order.
+// Rate-limited per client IP: this calls a paid OpenAI endpoint, and the
+// customer-facing UI explicitly invites repeated regeneration (the AI
+// preview is "mood reference only"), so an enforced cap is what actually
+// keeps that invitation from becoming an open bill — the UI's remaining-
+// count display reads from this same limit, not a separate number.
 export async function POST(request: Request) {
+  const clientKey = getClientKey(request)
+  const { allowed, remaining } = checkRateLimit(clientKey)
+  if (!allowed) {
+    return errorResponse(
+      429,
+      "rate_limited",
+      `지금은 미리보기 생성 한도(시간당 ${RATE_LIMIT_MAX_REQUESTS_PER_WINDOW}회)에 도달했어요 — 잠시 후 다시 시도해 주세요.`
+    )
+  }
+
   let body: unknown
   try {
     body = await request.json()
@@ -32,7 +48,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await generateCakePreview(trimmed)
-    return NextResponse.json(result)
+    return NextResponse.json({ ...result, remaining })
   } catch (error) {
     if (error instanceof APIConnectionTimeoutError) {
       return errorResponse(504, "timeout", "미리보기 생성 시간이 너무 오래 걸렸습니다. 다시 시도해 주세요.")
